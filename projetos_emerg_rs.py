@@ -16,35 +16,33 @@ from datetime import datetime as dt, timedelta
 
 warnings.filterwarnings('ignore')
 
-link = "https://sobre-monitor.readthedocs.io/en/latest/"
+st.subheader("Emergência no Rio Grande do Sul em pauta no Congresso Nacional")
 
-st.set_page_config(page_title="Monitor endividamento", page_icon=":bar_chart:", layout="wide", initial_sidebar_state="collapsed", 
-                   menu_items={'About': f'Para facilitar a sua análise, todos os valores já estão deflacionados!\n\n'
-        f'Quer conferir mais detalhes sobre este projeto ou entrar em contato conosco? [Clique aqui]({link})'})
-
-st.subheader("Endividamento em pauta no Congresso Nacional")
-
-st.markdown("<div style='text-align: center; color: #555555; font-size: 1.3em;margin-bottom: 20px;'>Proposições legislativas que se referem à endividamento com tramitação nos últimos 180 dias</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div style='text-align: center; color: #555555; font-size: 1.3em;margin-bottom: 20px;'>Proposições legislativas que se referem à catástrofe climática no Rio Grande do Sul</div>",
+    unsafe_allow_html=True)
 
 st.markdown("""
 <div style='text-align: left; color: #666666; font-size: 1em; background-color: #f0f0f0; padding: 10px; border-radius: 5px;margin-bottom: 20px;'>
-    💡&nbsp;&nbsp;&nbsp;A busca utiliza a base de dados da Câmara dos Deputados e se refere aos projetos de lei e medidas provisórias que tenham como palavras-chave termos relacionados ao endividamento da população e das empresas brasileiras. Os resultados são atualizados em tempo real.
+    💡&nbsp;&nbsp;&nbsp;A busca utiliza a base de dados da Câmara dos Deputados e se refere aos projetos de lei e medidas provisórias que tenham como palavras-chave termos relacionados à catástrofe climática no Rio Grande do Sul. Os resultados são atualizados em tempo real.
 </div>
 """, unsafe_allow_html=True)
 
-#API Camara dos deputados
+
+# API Camara dos deputados
 
 @st.cache_data(ttl=3600)
 def fetch_projetos(data_inicio, data_fim, palavras_chave):
     url = "https://dadosabertos.camara.leg.br/api/v2/proposicoes"
     params = {
-        "dataInicio": data_inicio,
-        "dataFim": data_fim,
+        "dataApresentacaoInicio": data_inicio,
+        "dataApresentacaoFim": data_fim,
         "ordenarPor": "id",
         "itens": 100,
         "pagina": 1,
-        "siglaTipo": ["PL", "PLP", "MPV"],
-        "keywords": palavras_chave
+        "siglaTipo": ["PL", "PLP", "MPV", "PEC", "PLP", "REQ"],
+        "keywords": palavras_chave,
+        "ano": 2024
     }
 
     projetos = []
@@ -61,6 +59,7 @@ def fetch_projetos(data_inicio, data_fim, palavras_chave):
             break
     return projetos
 
+
 @st.cache_data(ttl=3600)
 def fetch_tramitacoes(id_proposicao, token):
     url_tramitacoes = f"https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id_proposicao}/tramitacoes"
@@ -73,56 +72,49 @@ def fetch_tramitacoes(id_proposicao, token):
         print(f"Erro ao obter as tramitações da proposição {id_proposicao}: {response_tramitacoes.status_code}")
         return "Erro na tramitação"
 
+
 def create_dataframe(projetos, token):
+    if not projetos:
+        print("Nenhum projeto foi carregado da API.")
+        return pd.DataFrame()  # Retorna um DataFrame vazio se não houver projetos
+
     for proposicao in projetos:
-        id_proposicao = proposicao['id']
-        situacao_tramitacao = fetch_tramitacoes(id_proposicao, token)
-        proposicao['situacaoTramitacao'] = situacao_tramitacao
+        id_proposicao = proposicao.get('id')
+        if id_proposicao:
+            situacao_tramitacao = fetch_tramitacoes(id_proposicao, token)
+            proposicao['situacaoTramitacao'] = situacao_tramitacao
 
     colunas = ['siglaTipo', 'numero', 'ano', 'ementa', 'situacaoTramitacao']
     df = pd.DataFrame(projetos, columns=colunas)
-    df['situacaoTramitacao'] = df['situacaoTramitacao'].astype('str')
-    df['situacaoTramitacao'] = df['situacaoTramitacao'].replace(to_replace='None', value='Não informado')
-    
-    df['ano'] = df['ano'].astype('int')
-    df['numero'] = df['numero'].astype('int')
+    df.dropna(subset=['ano'], inplace=True)  # Remove linhas onde 'ano' é NaN
+
+    if df.empty:
+        print("DataFrame está vazio após limpar NaNs.")
+        return df
+
+    df['ano'] = df['ano'].astype(int)  # Converte ano para int
+    df['numero'] = df['numero'].astype(int)  # Converte número para int
 
     df.columns = ["Tipo", "Número", "Ano", "Ementa", "Situação"]
     return df
 
+
 token = "seu_token_de_acesso_aqui"
-data_inicio = (datetime.datetime.now() - datetime.timedelta(days=180)).strftime("%Y-%m-%d")
+data_inicio = datetime.datetime(2024, 5, 5).strftime("%Y-%m-%d")
 data_fim = datetime.datetime.now().strftime("%Y-%m-%d")
-palavras_chave = [ 
-"superendividamento",
-"inadimplimento das obrigações", 
-"mínimo existencial",   
-"repactuação de dívidas",
-"taxa de juros"
-"crédito ao consumidor",
-"parcelamento de dívidas",
-"renegociação de dívidas"
-"rotativo"
-"cartão de crédito",
-"crédito rural",
-"crédito habitacional",
-"empréstimo consignado"
-"capital de giro",
-"crédito para investimento",
-"sistemas de informação de crédito",
-"ativo problemático",
-"crédito a vencer"
+palavras_chave = [
+    "Rio Grande do Sul"
 ]
 
 projetos = fetch_projetos(data_inicio, data_fim, palavras_chave)
 
 df = create_dataframe(projetos, token)
 
+
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     # Inicializar os estados dos filtros apenas uma vez
     if 'filter_initialized' not in st.session_state:
         st.session_state.filter_tipo = df['Tipo'].unique().tolist()
-        st.session_state.filter_ano = (int(df['Ano'].min()), int(df['Ano'].max()))
         st.session_state.filter_situacao = df['Situação'].unique().tolist()
         st.session_state.filter_initialized = True
 
@@ -139,16 +131,6 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             default=st.session_state.filter_tipo
         )
 
-        # Filtro para o Ano
-        _min, _max = int(df['Ano'].min()), int(df['Ano'].max())
-        selected_ano = st.slider(
-            "Ano",
-            min_value=_min,
-            max_value=_max,
-            value=st.session_state.filter_ano,
-            step=1
-        )
-
         # Filtro para a Situação
         selected_situacao = st.multiselect(
             "Situação",
@@ -160,10 +142,6 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if selected_tipo != st.session_state.filter_tipo:
         df = df[df['Tipo'].isin(selected_tipo)]
         st.session_state.filter_tipo = selected_tipo
-
-    if selected_ano != st.session_state.filter_ano:
-        df = df[df['Ano'].between(*selected_ano)]
-        st.session_state.filter_ano = selected_ano
 
     if selected_situacao != st.session_state.filter_situacao:
         df = df[df['Situação'].isin(selected_situacao)]
@@ -177,24 +155,14 @@ def formatar_numero(valor):
     return f"{valor}"
 
 dados_formatados = filtered_df.style.format({'Número': formatar_numero,
-                                            'Ano': formatar_numero})
+                                             'Ano': formatar_numero})
 
 st.dataframe(dados_formatados, use_container_width=True, hide_index=True, height=500)
 
-#Última atualização
-
-url = "https://api.github.com/repos/brunagmoura/SiteMonitorEndividamento/commits"
-
-@st.cache_data
-def get_last_commit_date(url):
-    response = requests.get(url)
-    last_commit = response.json()[0]
-    return last_commit['commit']['committer']['date']
-
-last_update = get_last_commit_date(url)
-if last_update != "Não foi possível obter as informações":
-    last_update = dt.fromisoformat(last_update[:-1]) - timedelta(hours=3)
-    last_update = last_update.strftime("%d/%m/%Y %H:%M:%S")
+# Última atualização
 
 # Exibe no Streamlit
-st.warning(f"Esse site é atualizado automaticamente de acordo com a disponibilização de informações no Painel de Operações de Crédito, do Banco Central do Brasil. A última atualização foi em {last_update}.", icon = "🤖")
+st.warning(
+    f"Esse site é atualizado automaticamente de acordo com a consulta à Câmara dos Deputados. A última atualização foi em {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}.",
+    icon="🤖")
+
