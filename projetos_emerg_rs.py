@@ -16,6 +16,11 @@ from datetime import datetime as dt, timedelta
 
 warnings.filterwarnings('ignore')
 
+warnings.filterwarnings('ignore')
+
+st.set_page_config(page_title="Monitor projetos de Lei apresentadas no Congresso Nacional", page_icon="📑",
+                   layout="wide", initial_sidebar_state="collapsed")
+
 st.subheader("Emergência no Rio Grande do Sul em pauta no Congresso Nacional")
 
 st.markdown(
