@@ -45,7 +45,7 @@ def fetch_projetos(data_inicio, data_fim, palavras_chave):
         "ordenarPor": "id",
         "itens": 100,
         "pagina": 1,
-        "siglaTipo": ["PL", "PLP", "MPV", "PEC", "PLP", "REQ"],
+        #"siglaTipo": ["PL", "PLP", "MPV", "PEC", "PLP", "REQ"],
         "keywords": palavras_chave,
         "ano": 2024
     }
