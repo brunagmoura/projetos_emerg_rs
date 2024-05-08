@@ -45,7 +45,6 @@ def fetch_projetos(data_inicio, data_fim, palavras_chave):
         "ordenarPor": "id",
         "itens": 100,
         "pagina": 1,
-        #"siglaTipo": ["PL", "PLP", "MPV", "PEC", "PLP", "REQ"],
         "keywords": palavras_chave,
         "ano": 2024
     }
@@ -89,7 +88,7 @@ def create_dataframe(projetos, token):
             situacao_tramitacao = fetch_tramitacoes(id_proposicao, token)
             proposicao['situacaoTramitacao'] = situacao_tramitacao
 
-    colunas = ['siglaTipo', 'numero', 'ano', 'ementa', 'situacaoTramitacao']
+    colunas = ['siglaTipo', 'numero', 'ano', 'autor', 'siglaPartidoAutor', 'tramitacaoSenado', 'ementa', 'situacaoTramitacao']
     df = pd.DataFrame(projetos, columns=colunas)
     df.dropna(subset=['ano'], inplace=True)  # Remove linhas onde 'ano' é NaN
 
@@ -100,13 +99,13 @@ def create_dataframe(projetos, token):
     df['ano'] = df['ano'].astype(int)  # Converte ano para int
     df['numero'] = df['numero'].astype(int)  # Converte número para int
 
-    df.columns = ["Tipo", "Número", "Ano", "Ementa", "Situação"]
+    df.columns = ["Tipo", "Número", "Ano", "Autor", "Partido", "Tramitado para o Senado?", "Ementa", "Situação"]
     return df
 
 
 token = "seu_token_de_acesso_aqui"
 data_inicio = datetime.datetime(2024, 5, 5).strftime("%Y-%m-%d")
-data_fim = datetime.datetime.now().strftime("%Y-%m-%d")
+data_fim = datetime.datetime(2024, 5, 8).strftime("%Y-%m-%d")
 palavras_chave = [
     "Rio Grande do Sul"
 ]
