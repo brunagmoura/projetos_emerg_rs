@@ -76,6 +76,22 @@ def fetch_tramitacoes(id_proposicao, token):
         print(f"Erro ao obter as tramitações da proposição {id_proposicao}: {response_tramitacoes.status_code}")
         return "Erro na tramitação"
 
+@st.cache_data(ttl=3600)
+def fetch_detalhes(id_proposicao, token):
+    url = f"https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id_proposicao}"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        dados = response.json()['dados']
+        status_proposicao = dados.get('statusProposicao', {})
+        return {
+            'dataHora': status_proposicao.get('dataHora', 'Sem data'),
+            'descricaoTramitacao': status_proposicao.get('descricaoTramitacao', 'Sem tramitação'),
+            'descricaoSituacao': status_proposicao.get('descricaoSituacao', 'Sem situação')
+        }
+    else:
+        print(f"Erro ao obter os detalhes da proposição {id_proposicao}: {response.status_code}")
+        return {}
 
 def create_dataframe(projetos, token):
     if not projetos:
@@ -85,10 +101,11 @@ def create_dataframe(projetos, token):
     for proposicao in projetos:
         id_proposicao = proposicao.get('id')
         if id_proposicao:
-            situacao_tramitacao = fetch_tramitacoes(id_proposicao, token)
-            proposicao['situacaoTramitacao'] = situacao_tramitacao
+            detalhes = fetch_detalhes(id_proposicao, token)
+            proposicao.update(detalhes)
 
-    colunas = ['siglaTipo', 'numero', 'ano', 'autor', 'siglaPartidoAutor', 'tramitacaoSenado', 'ementa', 'situacaoTramitacao']
+    colunas = ['siglaTipo', 'numero', 'ano', 'autor', 'siglaPartidoAutor', 'tramitacaoSenado', 'ementa', 'dataHora',
+               'descricaoTramitacao', 'descricaoSituacao']
     df = pd.DataFrame(projetos, columns=colunas)
     df.dropna(subset=['ano'], inplace=True)  # Remove linhas onde 'ano' é NaN
 
@@ -99,7 +116,8 @@ def create_dataframe(projetos, token):
     df['ano'] = df['ano'].astype(int)  # Converte ano para int
     df['numero'] = df['numero'].astype(int)  # Converte número para int
 
-    df.columns = ["Tipo", "Número", "Ano", "Autor", "Partido", "Tramitado para o Senado?", "Ementa", "Situação"]
+    df.columns = ["Tipo", "Número", "Ano", "Autor", "Partido", "Tramitado para o Senado?", "Ementa", "Data e Hora",
+                  "Descrição da Tramitação", "Situação"]
     return df
 
 
