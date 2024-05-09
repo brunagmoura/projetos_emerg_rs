@@ -266,6 +266,7 @@ plot_emendas_individuais = px.choropleth_mapbox(df_emendas_individuais,
                                center={"lat": -29.68, "lon": -53.80},
                                opacity=1,
                                labels={'Valor':'Valor emendas individuais'},
+                               hover_data=["code_muni", "name_muni"],
                                featureidkey="properties.id")
 
 plot_emendas_individuais.update_layout(
