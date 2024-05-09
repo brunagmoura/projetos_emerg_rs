@@ -159,7 +159,7 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if 'filter_initialized' not in st.session_state:
         st.session_state.filter_tipo = df['Tipo'].unique().tolist()
         st.session_state.filter_situacao = df['Situação'].unique().tolist()
-        st.session_state.filter_autor = df['Autor'].unique().tolist()
+        #st.session_state.filter_autor = df['Autor'].unique().tolist()
         st.session_state.filter_initialized = True
 
     modify = st.checkbox("Filtrar o resultado")
@@ -183,11 +183,11 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         )
 
         # Filtro para o Autor
-        selected_autor = st.multiselect(
-            "Autor",
-            df['Autor'].unique(),
-            default=st.session_state.filter_situacao
-        )
+        #selected_autor = st.multiselect(
+        #    "Autor",
+        #    df['Autor'].unique(),
+        #    default=st.session_state.filter_situacao
+        #)
 
     # Aplicar filtros
     if selected_tipo != st.session_state.filter_tipo:
@@ -198,9 +198,9 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         df = df[df['Situação'].isin(selected_situacao)]
         st.session_state.filter_situacao = selected_situacao
 
-    if selected_autor != st.session_state.filter_situacao:
-        df = df[df['Autor'].isin(selected_autor)]
-        st.session_state.filter_situacao = selected_autor
+    #if selected_autor != st.session_state.filter_autor:
+    #    df = df[df['Autor'].isin(selected_autor)]
+    #    st.session_state.filter_autor = selected_autor
 
     return df
 
