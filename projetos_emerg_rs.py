@@ -218,52 +218,7 @@ total_propostas = len(df)
 
 st.write(f"Até o momento foram apresentadas {total_propostas} propostas legislativas sobre a tragédia climática no Rio Grande do Sul.")
 
-@st.cache_data()
-def load_data(arquivo, coluna_data):
-    data = pd.read_csv(arquivo, encoding="UTF-8", delimiter=';', decimal='.')
-    data[coluna_data] = pd.to_datetime(data[coluna_data], format='%d/%m/%Y')
-    data[coluna_data] = data[coluna_data].dt.strftime("%d-%m-%Y")
-    return data
-  
-st.markdown("<div style='text-align: center; color: #888888; font-size: 0.9em;margin-bottom: 20px;margin-top: 20px;'>Distribuição geográfica das emendas individuais</div>", unsafe_allow_html=True)
 
-@st.cache_data()
-def load_geojson_data():
-    url = "https://raw.githubusercontent.com/dadosfera/brasil-municipios-geojson/main/geojs-100-mun-v2.json"
-    response = requests.get(url)
-    return response.json()
-
-df_emendas_individuais = load_data(arquivo="Emendas_RS.csv", coluna_data="Data")
-geojson_data = load_geojson_data()
-
-plot_emendas_individuais = px.choropleth_mapbox(df_emendas_individuais, 
-                               geojson=geojson_data, 
-                               locations='code_muni', 
-                               color='Valor',
-                               color_continuous_scale="YlOrRd",
-                               range_color=(0, max(df_emendas_individuais['Valor'])),
-                               animation_frame='Data',  # Certifique-se de usar 'Data'
-                               mapbox_style="open-street-map",
-                               zoom=2.2, 
-                               center={"lat": -15, "lon": -57.33},
-                               opacity=1,
-                               labels={'Valor':'Valor emendas individuais', 'uf': 'Unidade da Federação do Brasil'},
-                               featureidkey="properties.id")
-
-plot_emendas_individuais.update_layout(
-    coloraxis_colorbar=dict(
-        len=1, 
-        y=-0.25,  
-        yanchor='bottom',  
-        xanchor='center',
-        x=0.5,   
-        orientation='h',  
-        title="Ativo problemático/População",
-        titleside = "bottom"
-    ),
-        margin=dict(t=0, b=0, l=0, r=0))
-
-st.plotly_chart(plot_emendas_individuais,use_container_width=True)
 
 
 # Última atualização
