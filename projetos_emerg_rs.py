@@ -141,7 +141,7 @@ def create_dataframe(projetos, token):
 
 token = "seu_token_de_acesso_aqui"
 data_inicio = dt(2024, 5, 5).strftime("%Y-%m-%d")
-data_fim = dt.now().strftime("%Y-%m-%d")
+data_fim = dt(2024, 5, 9).strftime("%Y-%m-%d")
 palavras_chave = [
     "Rio Grande do Sul"
 ]
