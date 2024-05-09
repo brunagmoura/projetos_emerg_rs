@@ -13,6 +13,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime as dt, timedelta
+import pytz
+timezone = pytz.timezone('America/Sao_Paulo')
+now = dt.now(timezone)
 
 warnings.filterwarnings('ignore')
 
@@ -141,7 +144,7 @@ def create_dataframe(projetos, token):
 
 token = "seu_token_de_acesso_aqui"
 data_inicio = dt(2024, 5, 5).strftime("%Y-%m-%d")
-data_fim = dt(2024, 5, 9).strftime("%Y-%m-%d")
+data_fim = now.strftime("%Y-%m-%d")
 palavras_chave = [
     "Rio Grande do Sul"
 ]
@@ -234,11 +237,12 @@ st.markdown("""
 
 @st.cache_data()
 def load_data(arquivo, coluna_data):
-    data = pd.read_csv(arquivo, encoding="UTF-8", delimiter=';', decimal='.')
-    data[coluna_data] = pd.to_datetime(data[coluna_data], format='%d/%m/%Y')
+    data = pd.read_csv(arquivo, encoding="UTF-8", delimiter=',', decimal='.')
+    print("Colunas disponíveis:", data.columns)
+    data[coluna_data] = pd.to_datetime(data[coluna_data], format='%d/%m/%Y', errors='coerce')
+    data = data.sort_values(by=coluna_data)
     data[coluna_data] = data[coluna_data].dt.strftime("%d-%m-%Y")
     return data
-
 
 @st.cache_data()
 def load_geojson_data():
@@ -246,30 +250,52 @@ def load_geojson_data():
     response = requests.get(url)
     return response.json()
 
-df_emendas_individuais = load_data(arquivo="Emendas_RS.csv", coluna_data="Data")
+Emendas_RS_cod = load_data(arquivo="/Users/brunamoura/projetos_rs_emerg/projeto_rs_emerg/Emendas_RS_cod.csv",
+                           coluna_data="data_emissao")
 geojson_data = load_geojson_data()
 
-df_emendas_individuais['code_muni'] = df_emendas_individuais['code_muni'].astype(str)
-
-lower_bound = df_emendas_individuais['Valor'].quantile(0.05)  # 5º percentil
-upper_bound = df_emendas_individuais['Valor'].quantile(0.95)  # 95º percentil
-
-plot_emendas_individuais = px.choropleth_mapbox(df_emendas_individuais,
+plot_emendas_individuais_movimentacao_liquida = px.choropleth_mapbox(Emendas_RS_cod,
                                geojson=geojson_data,
                                locations='code_muni',
-                               color='Valor',
+                               color='moviment_liquida',
                                color_continuous_scale="YlOrRd",
-                               range_color=(lower_bound, upper_bound),
-                               animation_frame='Data',
+                               animation_frame='data_emissao',
                                mapbox_style="carto-positron",
                                zoom=5,
                                center={"lat": -29.68, "lon": -53.80},
                                opacity=1,
-                               labels={'Valor':'Valor emendas individuais'},
-                               hover_data=["code_muni", "name_muni"],
+                               labels={'Valor':'moviment_liquida'},
+                               hover_data=["code_muni", "municipio"],
                                featureidkey="properties.id")
 
-plot_emendas_individuais.update_layout(
+plot_emendas_individuais_movimentacao_liquida.update_layout(
+    coloraxis_colorbar=dict(
+        len=1,
+        y=-0.25,
+        yanchor='bottom',
+        xanchor='center',
+        x=0.5,
+        orientation='h',
+        title="Saldo acumulado das emendas individuais (2024)",
+        titleside="bottom"
+    ),
+    margin=dict(t=0, b=0, l=0, r=0))
+
+plot_emendas_individuais_movimentacao_saldo = px.choropleth_mapbox(Emendas_RS_cod,
+                               geojson=geojson_data,
+                               locations='code_muni',
+                               color='saldo',
+                               color_continuous_scale="YlOrRd",
+                               animation_frame='data_emissao',
+                               mapbox_style="carto-positron",
+                               zoom=5,
+                               center={"lat": -29.68, "lon": -53.80},
+                               opacity=1,
+                               labels={'Valor':'saldo'},
+                               hover_data=["code_muni", "municipio"],
+                               featureidkey="properties.id")
+
+plot_emendas_individuais_movimentacao_saldo.update_layout(
     coloraxis_colorbar=dict(
         len=1,
         y=-0.25,
@@ -283,13 +309,23 @@ plot_emendas_individuais.update_layout(
     margin=dict(t=0, b=0, l=0, r=0))
 
 cols = st.columns([1, 1])  # Colunas na página
-with cols[0]:  # Conteúdo na primeira coluna
-    st.plotly_chart(plot_emendas_individuais, use_container_width=True)
+with cols[0]:
+    st.markdown(
+        "<div style='text-align: center; color: #888888; font-size: 0.9em;margin-bottom: 20px;margin-top: 20px;'>Emendas parlamentares individuais - movimentação líquida (R$) diária</div>",
+        unsafe_allow_html=True)
+
+    st.plotly_chart(plot_emendas_individuais_movimentacao_liquida, use_container_width=True)
+
+with cols[1]:
+    st.markdown(
+        "<div style='text-align: center; color: #888888; font-size: 0.9em;margin-bottom: 20px;margin-top: 20px;'>Emendas parlamentares individuais - saldo (R$) acumulado</div>",
+        unsafe_allow_html=True)
+    st.plotly_chart(plot_emendas_individuais_movimentacao_saldo, use_container_width=True)
 
 # Última atualização
 
 # Exibe no Streamlit
 st.warning(
-    f"A consulta às proposições legislativas é atualizada automaticamente de acordo com a API da Câmara dos Deputados. A última atualização foi em {dt.now().strftime('%d/%m/%Y %H:%M:%S')}. "
+    f"A consulta às proposições legislativas é atualizada automaticamente de acordo com a API da Câmara dos Deputados. A última atualização foi em {now.strftime('%d/%m/%Y %H:%M:%S')}. "
     f"A consulta aos valores das emendas individuais é atualizado diariamente. A última consulta foi em 08/05/2024",
     icon="🤖")
