@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import os
 import warnings
-import datetime
+#import datetime
 import calendar
 import json
 import requests
@@ -93,6 +93,22 @@ def fetch_detalhes(id_proposicao, token):
         print(f"Erro ao obter os detalhes da proposição {id_proposicao}: {response.status_code}")
         return {}
 
+@st.cache_data(ttl=3600)
+def fetch_autor(id_proposicao, token):
+    url = f"https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id_proposicao}/autores"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        dados = response.json()['dados']
+        if dados:
+            nome_autor = dados[0].get('nome', 'Sem nome do autor')
+            return {'autor': nome_autor}
+        else:
+            return {'autor': 'Sem autores'}
+    else:
+        print(f"Erro ao obter os autores da proposição {id_proposicao}: {response.status_code}")
+        return {'autor': 'Erro ao obter dados'}
+
 def create_dataframe(projetos, token):
     if not projetos:
         print("Nenhum projeto foi carregado da API.")
@@ -103,27 +119,32 @@ def create_dataframe(projetos, token):
         if id_proposicao:
             detalhes = fetch_detalhes(id_proposicao, token)
             proposicao.update(detalhes)
+            autor = fetch_autor(id_proposicao, token)
+            proposicao.update(autor)
 
-    colunas = ['siglaTipo', 'numero', 'ano', 'autor', 'siglaPartidoAutor', 'tramitacaoSenado', 'ementa', 'dataHora',
+    colunas = ['siglaTipo', 'numero', 'ano', 'autor', 'ementa', 'dataHora',
                'descricaoTramitacao', 'descricaoSituacao']
     df = pd.DataFrame(projetos, columns=colunas)
-    df.dropna(subset=['ano'], inplace=True)  # Remove linhas onde 'ano' é NaN
+
 
     if df.empty:
         print("DataFrame está vazio após limpar NaNs.")
         return df
 
+    df['dataHora'] = pd.to_datetime(df['dataHora'], errors='coerce')
+    df = df.sort_values(by='dataHora', ascending=False)
+
     df['ano'] = df['ano'].astype(int)  # Converte ano para int
     df['numero'] = df['numero'].astype(int)  # Converte número para int
 
-    df.columns = ["Tipo", "Número", "Ano", "Autor", "Partido", "Tramitado para o Senado?", "Ementa", "Data e Hora",
-                  "Descrição da Tramitação", "Situação"]
+    df.columns = ["Tipo", "Número", "Ano", "Autor", "Ementa", "Data e Hora",
+                  "Tramitação", "Situação"]
     return df
 
 
 token = "seu_token_de_acesso_aqui"
-data_inicio = datetime.datetime(2024, 5, 5).strftime("%Y-%m-%d")
-data_fim = datetime.datetime(2024, 5, 8).strftime("%Y-%m-%d")
+data_inicio = dt(2024, 5, 5).strftime("%Y-%m-%d")
+data_fim = dt.now().strftime("%Y-%m-%d")
 palavras_chave = [
     "Rio Grande do Sul"
 ]
@@ -138,6 +159,7 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if 'filter_initialized' not in st.session_state:
         st.session_state.filter_tipo = df['Tipo'].unique().tolist()
         st.session_state.filter_situacao = df['Situação'].unique().tolist()
+        st.session_state.filter_autor = df['Autor'].unique().tolist()
         st.session_state.filter_initialized = True
 
     modify = st.checkbox("Filtrar o resultado")
@@ -160,6 +182,13 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             default=st.session_state.filter_situacao
         )
 
+        # Filtro para o Autor
+        selected_autor = st.multiselect(
+            "Autor",
+            df['Autor'].unique(),
+            default=st.session_state.filter_situacao
+        )
+
     # Aplicar filtros
     if selected_tipo != st.session_state.filter_tipo:
         df = df[df['Tipo'].isin(selected_tipo)]
@@ -168,6 +197,10 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if selected_situacao != st.session_state.filter_situacao:
         df = df[df['Situação'].isin(selected_situacao)]
         st.session_state.filter_situacao = selected_situacao
+
+    if selected_autor != st.session_state.filter_situacao:
+        df = df[df['Autor'].isin(selected_autor)]
+        st.session_state.filter_situacao = selected_autor
 
     return df
 
@@ -181,10 +214,13 @@ dados_formatados = filtered_df.style.format({'Número': formatar_numero,
 
 st.dataframe(dados_formatados, use_container_width=True, hide_index=True, height=500)
 
+total_propostas = len(df)
+
+st.write(f"Até o momento foram apresentadas {total_propostas} propostas legislativas sobre a tragédia climática no Rio Grande do Sul.")
 # Última atualização
 
 # Exibe no Streamlit
 st.warning(
-    f"Esse site é atualizado automaticamente de acordo com a consulta à Câmara dos Deputados. A última atualização foi em {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}.",
+    f"Esse site é atualizado automaticamente de acordo com a consulta à Câmara dos Deputados. A última atualização foi em {dt.now().strftime('%d/%m/%Y %H:%M:%S')}.",
     icon="🤖")
 
