@@ -18,6 +18,9 @@ timezone = pytz.timezone('America/Sao_Paulo')
 now = dt.now(timezone)
 warnings.filterwarnings('ignore')
 
+st.set_page_config(page_title="Monitor das emendas individuais repassadas ao RS", page_icon="📑",
+                   layout="wide", initial_sidebar_state="collapsed")
+
 st.markdown(
     "<div style='text-align: center; color: #555555; font-size: 1.3em;margin-bottom: 20px;'>Distribuição das emendas individuais entre os municípios do RS</div>",
     unsafe_allow_html=True)
