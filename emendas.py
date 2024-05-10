@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 import pandas as pd
 import os
 import warnings
-#import datetime
 import calendar
 import json
 import requests
@@ -15,7 +14,9 @@ import numpy as np
 from datetime import datetime as dt, timedelta
 import pytz
 timezone = pytz.timezone('America/Sao_Paulo')
-import xml.etree.ElementTree as ET
+
+now = dt.now(timezone)
+warnings.filterwarnings('ignore')
 
 st.markdown(
     "<div style='text-align: center; color: #555555; font-size: 1.3em;margin-bottom: 20px;'>Distribuição das emendas individuais entre os municípios do RS</div>",
@@ -125,5 +126,5 @@ with cols[1]:
 # Exibe no Streamlit
 st.warning(
     f"A consulta às proposições legislativas é atualizada automaticamente de acordo com a API da Câmara dos Deputados. A última atualização foi em {now.strftime('%d/%m/%Y %H:%M:%S')}. "
-    f"A consulta aos valores das emendas individuais é atualizado diariamente. A última consulta foi em 08/05/2024",
+    f"A consulta aos valores das emendas individuais é atualizado diariamente. A última consulta foi em 10/05/2024",
     icon="🤖")
