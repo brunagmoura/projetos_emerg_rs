@@ -308,7 +308,7 @@ def load_geojson_data():
     response = requests.get(url)
     return response.json()
 
-Emendas_RS_cod = load_data(arquivo="/Users/brunamoura/projetos_rs_emerg/projeto_rs_emerg/Emendas_RS_cod.csv",
+Emendas_RS_cod = load_data(arquivo="Emendas_RS_cod.csv",
                            coluna_data="data_emissao")
 geojson_data = load_geojson_data()
 
