@@ -290,3 +290,12 @@ st.markdown(
     f"<div style='text-align: left; color: #555555; font-size: 1em; margin-bottom: 20px;'>Até o momento foram apresentadas <strong>{total_propostas_senado}</strong> propostas legislativas sobre a tragédia climática no Rio Grande do Sul no Senado Federal.</div>",
     unsafe_allow_html=True
 )
+
+st.markdown(
+    """
+    <strong>⚠️ Aviso:</strong> A consulta às emendas parlamentares foi movida para o endereço:
+    <a href='https://emergenciaempauta-emendas.streamlit.app' target='_blank'>https://emergenciaempauta-emendas.streamlit.app</a>
+    <span style='font-size:20px;'></span>
+    """,
+    unsafe_allow_html=True
+)
