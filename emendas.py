@@ -78,7 +78,7 @@ plot_emendas_individuais_movimentacao_liquida.update_layout(
         xanchor='center',
         x=0.5,
         orientation='h',
-        title="Saldo acumulado das emendas individuais (2024)",
+        title="Movimentação líquida das emendas individuais (2024)",
         titleside="bottom"
     ),
     margin=dict(t=0, b=0, l=0, r=0))
