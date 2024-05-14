@@ -129,5 +129,5 @@ with cols[1]:
 # Exibe no Streamlit
 st.warning(
     f"A consulta às proposições legislativas é atualizada automaticamente de acordo com a API da Câmara dos Deputados. A última atualização foi em {now.strftime('%d/%m/%Y %H:%M:%S')}. "
-    f"A consulta aos valores das emendas individuais é atualizado diariamente. A última consulta foi em 13/05/2024",
+    f"A consulta aos valores das emendas individuais é atualizado diariamente. A última consulta foi em 14/05/2024",
     icon="🤖")
