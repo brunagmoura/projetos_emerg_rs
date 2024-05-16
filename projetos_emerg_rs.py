@@ -293,8 +293,7 @@ st.markdown(
 
 st.markdown(
     """
-    <strong>⚠️ Aviso:</strong> A consulta às emendas parlamentares foi movida para o endereço:
-    <a href='https://emergenciaempauta-emendas.streamlit.app' target='_blank'>https://emergenciaempauta-emendas.streamlit.app</a>
+    <strong>⚠️ Aviso:</strong> Estamos trabalhando em uma melhoria para a consulta às execuções orçamentárias relacionadas a crise! Em breve disponibilizaremos novas informações.
     <span style='font-size:20px;'></span>
     """,
     unsafe_allow_html=True
